@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::{any::Any, error::Error};
 
 pub trait Service: Any {
     fn get(&self) -> Box<dyn Service>;
@@ -31,7 +31,7 @@ pub struct Services {
 }
 
 impl DB {
-    pub async fn get_pool(&self) -> sqlx::mysql::MySqlPool {
+    pub async fn get_pool(&self) -> Result<sqlx::mysql::MySqlPool, Box<dyn Error>> {
         println!("Getting database pool");
 
         let connection_string = format!(
@@ -43,11 +43,8 @@ impl DB {
         );
 
         match sqlx::mysql::MySqlPool::connect(&connection_string).await {
-            Ok(pool) => pool,
-            Err(_) => {
-                println!("Failed to connect to database");
-                panic!();
-            }
+            Ok(pool) => Ok(pool),
+            Err(e) => Err(Box::new(e)),
         }
     }
 }
