@@ -1,7 +1,5 @@
 use std::{any::Any, error::Error};
 
-use tracing::info;
-
 pub trait Service: Any {
     fn get(&self) -> Box<dyn Service>;
     fn get_name(&self) -> String;
