@@ -1,5 +1,7 @@
 use std::{any::Any, error::Error};
 
+use tracing::info;
+
 pub trait Service: Any {
     fn get(&self) -> Box<dyn Service>;
     fn get_name(&self) -> String;
@@ -35,17 +37,19 @@ impl DB {
         println!("Getting database pool");
 
         let connection_string = format!(
-            "mysql://{:?}:{:?}@{:?}:3306/{:?}",
-            std::env::var("USER"),
-            std::env::var("PASSWORD"),
-            std::env::var("HOST"),
-            std::env::var("DATABASE_NAME")
+            "mysql://{}:{}@{}:{}/{}",
+            std::env::var("USER").unwrap_or("".to_string()),
+            std::env::var("PASSWORD").unwrap_or("".to_string()),
+            std::env::var("HOST").unwrap_or("".to_string()),
+            std::env::var("PORT").unwrap_or("".to_string()),
+            std::env::var("DATABASE").unwrap_or("".to_string()),
         );
 
-        match sqlx::mysql::MySqlPool::connect(&connection_string).await {
-            Ok(pool) => Ok(pool),
-            Err(e) => Err(Box::new(e)),
-        }
+        info!("Connecting to database: {:?}", connection_string);
+
+        sqlx::mysql::MySqlPool::connect(&connection_string)
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn Error>)
     }
 }
 

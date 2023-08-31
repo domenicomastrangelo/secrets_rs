@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS secret_additional_fields (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    secret_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    value LONGTEXT NOT NULL,
+    max_views INTEGER,
+    total_views INTEGER,
+    password VARCHAR(255),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP,
+    FOREIGN KEY (secret_id) REFERENCES secrets (id) ON DELETE CASCADE
+);
