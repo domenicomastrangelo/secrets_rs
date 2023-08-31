@@ -1,6 +1,6 @@
 use actix_web::{get, web, App, HttpServer, Responder};
 use service_discovery::service_discovery::DB;
-use tracing::error;
+use tracing::{debug, error};
 mod response;
 mod service_discovery;
 mod user;
@@ -49,7 +49,7 @@ async fn users(user_id: web::Path<u32>) -> impl Responder {
                 return web::Json(response::response::Response::new().set_data(user).build())
             }
             Err(e) => {
-                println!("Failed to get user: {:?}", e);
+                debug!("Failed to get user: {:?}", e);
                 return web::Json(
                     response::response::Response::new()
                         .set_success(false)

@@ -6,4 +6,5 @@ run:
 	export HOST=127.0.0.1; \
 	export PORT=3306; \
 	export DATABASE=test; \
+	export RUST_LOG=debug; \
 	cargo run

@@ -17,7 +17,7 @@ impl<'a> Default for User {
 }
 
 pub async fn get_user(id: u32, pool: MySqlPool) -> Result<User, sqlx::Error> {
-    let user = sqlx::query_as::<_, User>("SELECT id, name FROM users WHERE id = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, name FROM users WHERE id = ?")
         .bind(id)
         .fetch_one(&pool)
         .await?;
