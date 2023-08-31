@@ -25,7 +25,18 @@ async fn main() -> std::io::Result<()> {
 #[tracing::instrument]
 async fn users(user_id: web::Path<u32>) -> impl Responder {
     let services = service_discovery::service_discovery::Services::new();
-    let service = services.get_service("db".to_string()).get();
+    let service = match services.get_service("db".to_string()) {
+        Some(service) => service,
+        None => {
+            error!("Failed to get database service");
+            return web::Json(
+                response::response::Response::new()
+                    .set_success(false)
+                    .set_message("Failed to get database service".to_string())
+                    .build(),
+            );
+        }
+    };
 
     if let Some(db) = service.as_any().downcast_ref::<DB>() {
         let pool = db.get_pool().await;

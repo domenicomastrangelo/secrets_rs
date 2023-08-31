@@ -58,13 +58,13 @@ impl Services {
         }
     }
 
-    pub fn get_service(&self, name: String) -> &Box<dyn Service> {
+    pub fn get_service(&self, name: String) -> Option<&Box<dyn Service>> {
         for service in &self.services {
             if service.get_name() == name.as_str() {
-                return service;
+                return Some(service);
             }
         }
 
-        panic!("Service not found");
+        None
     }
 }
