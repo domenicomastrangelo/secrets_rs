@@ -45,8 +45,6 @@ impl DB {
             std::env::var("DATABASE").unwrap_or("".to_string()),
         );
 
-        info!("Connecting to database: {:?}", connection_string);
-
         sqlx::mysql::MySqlPool::connect(&connection_string)
             .await
             .map_err(|e| Box::new(e) as Box<dyn Error>)
