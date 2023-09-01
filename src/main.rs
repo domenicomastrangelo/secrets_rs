@@ -1,5 +1,5 @@
 use actix_web::{get, web, App, HttpServer, Responder};
-use service_discovery::service_discovery::DB;
+use service_discovery::db_service::DB;
 use tracing::{debug, error};
 mod response;
 mod service_discovery;
@@ -39,9 +39,9 @@ async fn users(user_id: web::Path<u32>) -> impl Responder {
     };
 
     if let Some(db) = service.as_any().downcast_ref::<DB>() {
-        let inst = service_discovery::service_discovery::DB_INSTANCE.get();
+        let inst = service_discovery::db_service::DB_INSTANCE.get();
         let inst = if inst.is_none() {
-            service_discovery::service_discovery::DB::new().await
+            DB::new().await
         } else {
             inst.unwrap_or(&db)
         };
