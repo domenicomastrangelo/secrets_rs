@@ -39,16 +39,21 @@ async fn users(user_id: web::Path<u32>) -> impl Responder {
     };
 
     if let Some(db) = service.as_any().downcast_ref::<DB>() {
-        let pool = db.get_pool().await;
+        let inst = service_discovery::service_discovery::DB_INSTANCE.get();
+        let inst = if inst.is_none() {
+            service_discovery::service_discovery::DB::new().await
+        } else {
+            inst.unwrap_or(&db)
+        };
 
-        let pool = match pool {
-            Ok(pool) => pool,
-            Err(e) => {
-                error!("Failed to get database pool: {:?}", e);
+        let pool = match inst.instance.clone() {
+            Some(pool) => pool,
+            None => {
+                error!("Failed to get database instance");
                 return web::Json(
                     response::response::Response::new()
                         .set_success(false)
-                        .set_message("Failed to get database pool".to_string())
+                        .set_message("Failed to get database instance".to_string())
                         .build(),
                 );
             }

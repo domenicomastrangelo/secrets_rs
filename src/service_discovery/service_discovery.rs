@@ -1,4 +1,6 @@
-use std::{any::Any, error::Error};
+use once_cell::sync::OnceCell;
+use std::any::Any;
+use tracing::error;
 
 pub trait Service: Any {
     fn get(&self) -> Box<dyn Service>;
@@ -7,13 +9,15 @@ pub trait Service: Any {
 }
 
 pub struct DB {
-    name: String,
+    pub name: String,
+    pub instance: Option<sqlx::mysql::MySqlPool>,
 }
 
 impl Service for DB {
     fn get(&self) -> Box<dyn Service> {
         Box::new(DB {
             name: "db".to_string(),
+            instance: None,
         })
     }
 
@@ -30,8 +34,33 @@ pub struct Services {
     services: Vec<Box<dyn Service>>,
 }
 
+pub static DB_INSTANCE: OnceCell<&'static DB> = OnceCell::new();
+
 impl DB {
-    pub async fn get_pool(&self) -> Result<sqlx::mysql::MySqlPool, Box<dyn Error>> {
+    pub async fn new() -> &'static DB {
+        match DB_INSTANCE.get() {
+            Some(db) => db,
+            None => {
+                let mut db = DB {
+                    name: "db".to_string(),
+                    instance: None,
+                };
+
+                db.get_pool().await;
+
+                DB_INSTANCE
+                    .set(Box::leak(Box::new(db)))
+                    .unwrap_or_else(|_| panic!("Failed to set database instance"));
+
+                match DB_INSTANCE.get() {
+                    Some(db) => db,
+                    None => panic!("Failed to get database instance"),
+                }
+            }
+        }
+    }
+
+    async fn get_pool(&mut self) {
         println!("Getting database pool");
 
         let connection_string = format!(
@@ -43,9 +72,13 @@ impl DB {
             std::env::var("DATABASE").unwrap_or("".to_string()),
         );
 
-        sqlx::mysql::MySqlPool::connect(&connection_string)
-            .await
-            .map_err(|e| Box::new(e) as Box<dyn Error>)
+        self.instance = match sqlx::mysql::MySqlPool::connect(&connection_string).await {
+            Ok(pool) => Some(pool),
+            Err(e) => {
+                error!("Failed to get database pool: {:?}", e);
+                None
+            }
+        };
     }
 }
 
@@ -54,6 +87,7 @@ impl Services {
         Services {
             services: vec![Box::new(DB {
                 name: "db".to_string(),
+                instance: None,
             })],
         }
     }
